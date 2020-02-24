@@ -1,15 +1,18 @@
 package uk.co.bbc.impressionshack
 
-import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.app.Activity
+import android.graphics.Color
+import android.util.Log
 import kotlinx.android.synthetic.main.a_list_item.view.*
+import java.util.*
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,9 +26,11 @@ class MainActivity : AppCompatActivity() {
 
 
         viewManager = LinearLayoutManager(this)
-        val viewAdapter = MyAdapter()
-        viewAdapter.dataset = (0..400).map { "" + it }
+        val viewAdapter = ImpressionAdapter(this)
+        viewAdapter.setHasStableIds(true)
+        viewAdapter.dataSet = (0..400).map { ListItemModel(it.toLong(),false, "item " + it) }
         viewAdapter.notifyDataSetChanged()
+
 
         recyclerView = findViewById<RecyclerView>(R.id.my_recycler_view).apply {
             // use this setting to improve performance if you know that changes
@@ -42,26 +47,48 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class MyAdapter : RecyclerView.Adapter<MyAdapter.MyViewHolder>() {
+class MyViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
-    var dataset = emptyList<String>()
+data class ListItemModel(val id: Long, var impressed: Boolean, val text: String)
 
-    class MyViewHolder(val view: View) : RecyclerView.ViewHolder(view)
+class ImpressionAdapter(activity: Activity) : RecyclerView.Adapter<MyViewHolder>() {
+    var dataSet = listOf<ListItemModel>()
+    private val visibilityTracker = VisibilityTracker(activity)
+    private val mViewPositionMap = WeakHashMap<View, Int>()
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.a_list_item, parent, false)
+    init {
+        visibilityTracker.visibilityTrackerListener = object: VisibilityTracker.VisibilityTrackerListener {
+            override fun onVisibilityChanged(visibleViews: List<View>, invisibleViews: List<View>) {
 
+                //
+                val visibleViews = visibleViews.map { mViewPositionMap[it] }.joinToString { it.toString() }
+
+                Log.d("VISIBLE_VIEWS", visibleViews)
+            }
+
+        }
+    }
+
+    override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): MyViewHolder {
+        val view = LayoutInflater.from(viewGroup.context).inflate(R.layout.a_list_item, viewGroup, false)
         return MyViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        //RED UNSEEN
-        //YELLOW Detecting
-        //GREEN SEEN
+        val itemModel = dataSet[position]
 
-        holder.view.impression.setBackgroundColor(Color.RED)
+        holder.view.impression.setBackgroundColor(if(itemModel.impressed) Color.GREEN else Color.RED)
+        holder.view.subtitle.text = itemModel.text
+
+        mViewPositionMap[holder.view] = position
+        visibilityTracker.addView(holder.view, 50)
     }
 
-    override fun getItemCount() = dataset.size
-}
+    override fun getItemId(position: Int): Long {
+        return dataSet[position].id
+    }
 
+    override fun getItemCount(): Int {
+        return dataSet.size
+    }
+}
