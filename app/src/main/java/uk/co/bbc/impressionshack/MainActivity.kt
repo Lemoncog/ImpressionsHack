@@ -9,9 +9,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.app.Activity
 import android.graphics.Color
-import android.util.Log
 import kotlinx.android.synthetic.main.a_list_item.view.*
-import java.util.*
+import uk.co.bbc.impressionshack.theAPI.ImpressionDetection
+import uk.co.bbc.impressionshack.theAPI.usecases.TrackViewForImpression
 
 
 class MainActivity : AppCompatActivity() {
@@ -53,17 +53,13 @@ data class ListItemModel(val id: Long, var impressed: Boolean, val text: String)
 
 class ImpressionAdapter(activity: Activity) : RecyclerView.Adapter<MyViewHolder>() {
     var dataSet = listOf<ListItemModel>()
-    private val visibilityTracker = VisibilityTracker(activity)
-    private val mViewPositionMap = WeakHashMap<View, Int>()
+    private val impressionDetection = ImpressionDetection()
+
+    private val visibilityTracker = ImpressionDetectionOLD(activity)
 
     init {
-        visibilityTracker.visibilityTrackerListener = object: VisibilityTracker.VisibilityTrackerListener {
+        visibilityTracker.visibilityTrackerListener = object: ImpressionDetectionOLD.VisibilityTrackerListener {
             override fun onVisibilityChanged(visibleViews: List<View>, invisibleViews: List<View>) {
-
-                //
-                val visibleViews = visibleViews.map { mViewPositionMap[it] }.joinToString { it.toString() }
-
-                Log.d("VISIBLE_VIEWS", visibleViews)
             }
 
         }
@@ -80,8 +76,7 @@ class ImpressionAdapter(activity: Activity) : RecyclerView.Adapter<MyViewHolder>
         holder.view.impression.setBackgroundColor(if(itemModel.impressed) Color.GREEN else Color.RED)
         holder.view.subtitle.text = itemModel.text
 
-        mViewPositionMap[holder.view] = position
-        visibilityTracker.addView(holder.view, 50)
+        impressionDetection.trackViewForImpression(holder.view, position)
     }
 
     override fun getItemId(position: Int): Long {

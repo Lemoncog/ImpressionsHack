@@ -10,7 +10,7 @@ import android.view.ViewTreeObserver
 import java.util.ArrayList
 import java.util.WeakHashMap
 
-class VisibilityTracker(activity: Activity) {
+class ImpressionDetectionOLD(activity: Activity) {
     var visibilityTrackerListener: VisibilityTrackerListener? = null
     private val mTrackedViews = WeakHashMap<View, TrackingInfo>()
     private var mOnPreDrawListener: ViewTreeObserver.OnPreDrawListener? = null
@@ -46,13 +46,13 @@ class VisibilityTracker(activity: Activity) {
             viewTreeObserver.addOnPreDrawListener(mOnPreDrawListener)
         } else {
             Log.d(
-                VisibilityTracker::class.java.simpleName,
+                ImpressionDetectionOLD::class.java.simpleName,
                 "Visibility tracker root view is not alive"
             )
         }
     }
 
-    fun addView(view: View, minVisiblePercentageViewed: Int) {
+    fun trackViewForImpression(view: View, minVisiblePercentageViewed: Int) {
 
         var trackingInfo = mTrackedViews[view]
         if (trackingInfo == null) {
